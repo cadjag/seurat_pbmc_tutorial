@@ -23,6 +23,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(Seurat)
 library(patchwork)
+library(ggplot2)
+
 ```
 
 
@@ -345,6 +347,33 @@ pbmc <- RenameIdents(pbmc, new.cluster.ids)
 DimPlot(pbmc, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
 #saveRDS(pbmc, file = "./output/pbmc3k_final.rds")
 ```
+
+
+## 9. Data visualization extras
+
+Seurat-generated plots are `ggplot2`-compatible and can be edited using standard `ggplot2` commands.
+
+```{r ggplot2 plot editing}
+baseplot <- DimPlot(pbmc, reduction = "umap")
+baseplot + labs(title = "Clustering of 2,700 PBMCs") 
+baseplot + labs(title = "Clustering of 2,700 PBMCs") + theme_dark()
+```
+
+### 9a. Interactive plotting features
+
+Seurat utilizes R’s `plotly` graphing library to create interactive plots. This interactive plotting feature works with any `ggplot2`-based scatter plots (requires a `geom_point` layer). To use, simply make a `ggplot2`-based scatter plot (such as `DimPlot()` or `FeaturePlot()`) and pass the resulting plot to `HoverLocator()`.
+
+
+```{r show hoverplots}
+# Include additional data to display alongside cell names by passing in a data frame of
+# information Works well when using FetchData
+plot <- FeaturePlot(pbmc, features = "MS4A1")
+HoverLocator(plot = plot, information = FetchData(pbmc, vars = c("ident", "PC_1", "nFeature_RNA")))
+HoverLocator(plot = baseplot, information = FetchData(pbmc, vars = c("ident", "PC_1", "nFeature_RNA")))
+
+```
+
+
 
 ```{r session info}
 
