@@ -325,6 +325,9 @@ We include several tools for visualizing marker expression. `VlnPlot()` (shows e
 VlnPlot(pbmc, features = c("MS4A1", "CD79A"))
 # you can plot raw counts as well
 VlnPlot(pbmc, features = c("NKG7", "PF4"), slot = "counts", log = TRUE)
+```
+
+```{r differential expression visualization 2, fig.height=15, fig.width = 15}
 
 FeaturePlot(pbmc, features = c("MS4A1", "GNLY", "CD3E", "CD14", "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A"))
 
@@ -351,12 +354,15 @@ knitr::kable(x = table)
 ```
 
 
+
 ```{r cluster IDs}
+
 new.cluster.ids <- c("Naive CD4+ T", "CD14+ Mono", "Memory CD4+ T", "B", "CD8+ T", "FCGR3A+ Mono", "NK", "DC", "Platelet")
 names(new.cluster.ids) <- levels(pbmc)
 pbmc <- RenameIdents(pbmc, new.cluster.ids)
 DimPlot(pbmc, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
 #saveRDS(pbmc, file = "./output/pbmc3k_final.rds")
+
 ```
 
 
