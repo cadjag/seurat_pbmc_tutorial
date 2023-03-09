@@ -32,6 +32,7 @@ library(ggplot2)
 
 
 ```{r load data, warning = FALSE}
+
 # Load the PBMC dataset
 pbmc.data <- Read10X(data.dir = "./data/pbmc3k_filtered_gene_bc_matrices/filtered_gene_bc_matrices/hg19/")
 
@@ -40,6 +41,7 @@ pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3
 
 # View info about object
 pbmc
+
 ```
 
 
@@ -66,8 +68,7 @@ Seurat allows you to easily explore QC metrics and filter cells based on any use
 
 ```{r}
 
-# The [[ operator can add columns to object metadata. 
-# This is a great place to stash QC stats
+# The [[ operator can add columns to object metadata. This is a great place to stash QC stats
 pbmc[["percent.mt"]] <- PercentageFeatureSet(pbmc, pattern = "^MT-")
 
 ```
@@ -108,6 +109,7 @@ plot1 + plot2
 ```
 
 ```{r subset cells}
+
 # subset cells for further analysis based on QC metrics
 pbmc <- subset(pbmc, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & percent.mt < 5)
 
@@ -176,6 +178,7 @@ pbmc <- RunPCA(pbmc, features = VariableFeatures(object = pbmc))
 ```
 
 ```{r visualize PCA}
+
 # Examine and visualize PCA results a few different ways
 print(pbmc[["pca"]], dims = 1:5, nfeatures = 5)
 
@@ -185,7 +188,12 @@ DimPlot(pbmc, reduction = "pca")
 
 DimHeatmap(pbmc, dims = 1, cells = 500, balanced = TRUE)
 
+```
+
+```{r, fig.width=10, fig.height=15}
+
 DimHeatmap(pbmc, dims = 1:15, cells = 500, balanced = TRUE)
+
 ```
 
 ### 4b. Determine dimensionality of dataset
@@ -216,7 +224,9 @@ JackStrawPlot(pbmc, dims = 1:15)
 An alternative heuristic method generates an ‘Elbow plot’: a ranking of principle components based on the percentage of variance explained by each one (`ElbowPlot()` function). In this example, we can observe an ‘elbow’ around PC9-10, suggesting that the majority of true signal is captured in the first 10 PCs.
 
 ```{r elbowplot}
+
 ElbowPlot(pbmc)
+
 ```
 
 Identifying the true dimensionality of a dataset – can be challenging/uncertain for the user. We therefore suggest these three approaches to consider. The first is more supervised, exploring PCs to determine relevant sources of heterogeneity, and could be used in conjunction with GSEA for example. The second implements a statistical test based on a random null model, but is time-consuming for large datasets, and may not return a clear PC cutoff. The third is a heuristic that is commonly used, and can be calculated instantly. In this example, all three approaches yielded similar results, but we might have been justified in choosing anything between PC 7-12 as a cutoff.
@@ -294,6 +304,7 @@ pbmc.markers <- FindAllMarkers(pbmc, only.pos = TRUE, min.pct = 0.25, logfc.thre
 pbmc.markers %>%
     group_by(cluster) %>%
     slice_max(n = 2, order_by = avg_log2FC)
+
 ```
 
 Seurat has several tests for differential expression which can be set with the test.use parameter (see our [DE vignette](https://satijalab.org/seurat/articles/de_vignette.html) for details). For example, the ROC test returns the ‘classification power’ for any individual marker (ranging from 0 - random, to 1 - perfect).
@@ -310,12 +321,12 @@ We include several tools for visualizing marker expression. `VlnPlot()` (shows e
 
 
 ```{r differential expression visualization}
+
 VlnPlot(pbmc, features = c("MS4A1", "CD79A"))
 # you can plot raw counts as well
 VlnPlot(pbmc, features = c("NKG7", "PF4"), slot = "counts", log = TRUE)
 
-FeaturePlot(pbmc, features = c("MS4A1", "GNLY", "CD3E", "CD14", "FCER1A", "FCGR3A", "LYZ", "PPBP",
-    "CD8A"))
+FeaturePlot(pbmc, features = c("MS4A1", "GNLY", "CD3E", "CD14", "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A"))
 
 #DoHeatmap() generates an expression heatmap for given cells and features. In this case, we are plotting the top 20 markers (or all markers if less than 20) for each cluster.
 pbmc.markers %>%
