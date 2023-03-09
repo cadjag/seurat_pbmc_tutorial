@@ -287,10 +287,10 @@ head(cluster2.markers, n = 5)
 cluster5.markers <- FindMarkers(pbmc, ident.1 = 5, ident.2 = c(0, 3), min.pct = 0.25)
 head(cluster5.markers, n = 5)
 
-# find markers for every cluster compared to all remaining cells, report only the positive
-# ones
+# find markers for every cluster compared to all remaining cells, report only the positive ones
 pbmc.markers <- FindAllMarkers(pbmc, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 
+# show top 2 positive markers for each cluster
 pbmc.markers %>%
     group_by(cluster) %>%
     slice_max(n = 2, order_by = avg_log2FC)
@@ -374,9 +374,50 @@ HoverLocator(plot = baseplot, information = FetchData(pbmc, vars = c("ident", "P
 ```
 
 
+There are several plots available in Seurat to visualize your data.
+
+```{r extra plots, fig.width=15, fig.height=15}
+
+# make a list of features (genes) we'd like to view 
+features <- c("LYZ", "CCL5", "IL32", "PTPRCAP", "FCGR3A", "PF4")
+
+# Ridge plots - from ggridges. Visualize single cell expression distributions in each cluster
+RidgePlot(pbmc, features = features, ncol = 2)
+
+# Violin plot - Visualize single cell expression distributions in each cluster
+VlnPlot(pbmc, features = features)
+
+# Feature plot - visualize feature expression in low-dimensional space
+FeaturePlot(pbmc, features = features)
+```
+
+
+
+
+```{r extra plots 2, fig.width=15, fig.height=5}
+# Dot plots - the size of the dot corresponds to the percentage of cells expressing the
+# feature in each cluster. The color represents the average expression level
+DotPlot(pbmc, features = features) + RotatedAxis()
+
+# Single cell heatmap of feature expression
+DoHeatmap(subset(pbmc, downsample = 100), features = features, size = 3)
+
+# Visualize co-expression of two features simultaneously
+FeaturePlot(pbmc, features = c("MS4A1", "CD79A"), blend = TRUE)
+
+```
+
+
+
+
+
+
+
+
+
 
 ```{r session info}
 
-sessionInfo()
+sessionInfo() 
 
 ```
