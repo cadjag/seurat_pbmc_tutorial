@@ -1,6 +1,6 @@
 #shiny app to generate gene-wise visualizations for seurat pbmc tutorial data
 library(shiny)
-
+library(shinythemes)
 
 
 # environment setup / Seurat analysis & processing
@@ -34,43 +34,78 @@ library(shiny)
 
 # app ui
 
-ui <- fluidPage(
-        titlePanel("PBMC scRNA-seq Data"),
-        sidebarLayout(
-          sidebarPanel(
-            selectizeInput("gene", #type to find gene symbol for plotting
-                           label = "Gene Symbol:",
-                           choices = gene_list,
-                           selected = NULL,
-                           multiple = FALSE,
-                           options = NULL)
-                      ),
-          
-          mainPanel(
-            plotOutput("violin_plot"),
-            plotOutput("ridge_plot"),
-            plotOutput("feature_plot")
-          )
+ui <- navbarPage("PBMC scRNA-seq Data",
+        theme = shinytheme("flatly"),
+        navbarMenu("Gene Plots",
+        tabPanel("Violin Plot",
+          sidebarLayout(
+            sidebarPanel(
+              selectizeInput("gene_violin", #type to find gene symbol for plotting
+                             label = "Gene Symbol:",
+                             choices = gene_list,
+                             selected = "IL32",
+                             multiple = FALSE,
+                             options = NULL)
+                        ),
+            
+            mainPanel(
+              plotOutput("violin_plot", height = "600px")
+                      )
           
                     )
-
+        ),
+        tabPanel("Ridge Plot",
+                 sidebarLayout(
+                   sidebarPanel(
+                     selectizeInput("gene_ridge", #type to find gene symbol for plotting
+                                    label = "Gene Symbol:",
+                                    choices = gene_list,
+                                    selected = "IL32",
+                                    multiple = FALSE,
+                                    options = NULL)
+                   ),
+                   
+                   mainPanel(
+                     plotOutput("ridge_plot", height = "600px")
+                   )
+                   
+                 )),
+        tabPanel("Feature Plot",
+                 sidebarLayout(
+                   sidebarPanel(
+                     selectizeInput("gene_feature", #type to find gene symbol for plotting
+                                    label = "Gene Symbol:",
+                                    choices = gene_list,
+                                    selected = "IL32",
+                                    multiple = FALSE,
+                                    options = NULL)
+                   ),
+                   
+                   mainPanel(
+                     plotOutput("feature_plot", height = "600px")
+                   )
+                   
+                 ))
+        ),
+        tabPanel("Interactive UMAP"),
+        tabPanel("QC Plots")
 )
 
 
 
 # app server
 
-server <- function(input, output, session) {
+server <- function(input, output) {
 
-  output$violin_plot <- renderPlot({ Seurat::VlnPlot(pbmc, features = input$gene) +
+  output$violin_plot <- renderPlot({ Seurat::VlnPlot(pbmc, features = input$gene_violin) +
                                      ggplot2::theme(legend.position="none",
                                                     axis.title.x = element_blank()) })
   
-  output$ridge_plot <- renderPlot({ Seurat::RidgePlot(pbmc, features = input$gene) +
+  output$ridge_plot <- renderPlot({ Seurat::RidgePlot(pbmc, features = input$gene_ridge) +
                                     ggplot2::theme(legend.position="none",
                                                    axis.title.y = element_blank()) })
   
-  output$feature_plot <- renderPlot({ Seurat::FeaturePlot(pbmc, features = input$gene)})
+  output$feature_plot <- renderPlot({ Seurat::FeaturePlot(pbmc, features = input$gene_feature)})
   
 }
 
