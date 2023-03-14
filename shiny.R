@@ -1,7 +1,7 @@
 #shiny app to generate gene-wise visualizations for seurat pbmc tutorial data
 library(shiny)
 library(shinythemes)
-
+library(plotly)
 
 # environment setup / Seurat analysis & processing
   # load data and initialize Seurat object
@@ -87,7 +87,11 @@ ui <- navbarPage("PBMC scRNA-seq Data",
                    
                  ))
         ),
-        tabPanel("Interactive UMAP"),
+        tabPanel("UMAP",
+                 mainPanel(
+                   plotlyOutput("umap_plot", width = "800px", height = "600px")
+                 )),
+        
         tabPanel("QC Plots")
 )
 
@@ -105,7 +109,11 @@ server <- function(input, output) {
                                     ggplot2::theme(legend.position="none",
                                                    axis.title.y = element_blank()) })
   
-  output$feature_plot <- renderPlot({ Seurat::FeaturePlot(pbmc, features = input$gene_feature)})
+  output$feature_plot <- renderPlot({ Seurat::FeaturePlot(pbmc, features = input$gene_feature) })
+  
+  output$umap_plot <- renderPlotly({ baseplot <- Seurat::DimPlot(pbmc, reduction = "umap")
+                                   Seurat::HoverLocator(plot = baseplot, 
+                                                         information = Seurat::FetchData(pbmc, vars = c("ident", "PC_1", "nFeature_RNA"))) })
   
 }
 

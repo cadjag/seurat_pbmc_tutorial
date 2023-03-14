@@ -8,6 +8,7 @@ renv::install("Seurat")
 renv::install("Matrix")
 renv::install("shiny")
 renv::install("shinythemes")
+renv::install("plotly")
 BiocManager::install("limma")
 
 reticulate::py_install(packages = 'umap-learn')
