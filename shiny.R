@@ -2,6 +2,7 @@
 library(shiny)
 library(shinythemes)
 library(plotly)
+library(periscope)
 
 # environment setup / Seurat analysis & processing
   # load data and initialize Seurat object
@@ -11,6 +12,10 @@ library(plotly)
     gene_list <- rownames(pbmc)
   # add mitochondrial RNA % column to QC stats dataframe
     pbmc[["percent.mt"]] <- Seurat::PercentageFeatureSet(pbmc, pattern = "^MT-")
+  # make qc plots
+    qc_violin_plot <- Seurat::VlnPlot(pbmc, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+    qc_scatter_plot1 <- Seurat::FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "percent.mt")
+    qc_scatter_plot2 <- Seurat::FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
   # subset cells for further analysis based on QC metrics
     pbmc <- subset(pbmc, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & percent.mt < 5)
   # normalize data
@@ -44,8 +49,9 @@ ui <- navbarPage("PBMC scRNA-seq Data",
                              label = "Gene Symbol:",
                              choices = gene_list,
                              selected = "IL32",
-                             multiple = FALSE,
-                             options = NULL)
+                             multiple = FALSE),
+              
+              downloadButton("download_violin", "Save Plot")
                         ),
             
             mainPanel(
@@ -61,8 +67,9 @@ ui <- navbarPage("PBMC scRNA-seq Data",
                                     label = "Gene Symbol:",
                                     choices = gene_list,
                                     selected = "IL32",
-                                    multiple = FALSE,
-                                    options = NULL)
+                                    multiple = FALSE),
+                                    
+                     downloadButton("download_ridge", "Save Plot")
                    ),
                    
                    mainPanel(
@@ -77,22 +84,58 @@ ui <- navbarPage("PBMC scRNA-seq Data",
                                     label = "Gene Symbol:",
                                     choices = gene_list,
                                     selected = "IL32",
-                                    multiple = FALSE,
-                                    options = NULL)
+                                    multiple = FALSE),
+                     downloadButton("download_feature", "Save Plot")
                    ),
                    
                    mainPanel(
                      plotOutput("feature_plot", height = "600px")
                    )
+                 )),
+        tabPanel("Multi-Feature Plot",
+                 sidebarLayout(
+                   sidebarPanel(
+                     selectizeInput("gene_multifeature", #type to find gene symbol for plotting
+                                    label = "Gene Symbol:",
+                                    choices = gene_list,
+                                    selected = c("MS4A1", "CD79A"),
+                                    multiple = TRUE,
+                                    options = list(maxItems = 2)),
+                     downloadButton("download_multifeature", "Save Plot")
+                   ),
                    
-                 ))
-        ),
+                   mainPanel(
+                     plotOutput("multifeature_plot", height = "600px")
+                   )
+                 )),
+        tabPanel("Dot Plot",
+                 sidebarLayout(
+                   sidebarPanel(
+                     selectizeInput("gene_dot", #type to find gene symbol for plotting
+                                    label = "Gene Symbol:",
+                                    choices = gene_list,
+                                    selected = c("PPBP","LYZ","S100A9","IGLL5","GNLY","FTL","PF4","FTH1","GNG11","S100A8", "IL32", "CCL5", "CD8A"),
+                                    multiple = TRUE,
+                                    options = list(maxItems = 15)),
+                     downloadButton("download_dot", "Save Plot")
+                   ),
+                   
+                   mainPanel(
+                     plotOutput("dot_plot", height = "600px")
+                   )
+                 )
+        )),
         tabPanel("UMAP",
                  mainPanel(
                    plotlyOutput("umap_plot", width = "800px", height = "600px")
                  )),
         
-        tabPanel("QC Plots")
+        tabPanel("QC Plots",
+                 mainPanel(
+                   plotOutput("qc_violin_plot", height = "600px"),
+                   plotOutput("qc_scatter_plot", height = "600px"),
+                   plotOutput("qc_variable_features_plot", width = "50%", height = "600px")
+                 ))
 )
 
 
@@ -101,19 +144,75 @@ ui <- navbarPage("PBMC scRNA-seq Data",
 
 server <- function(input, output) {
 
-  output$violin_plot <- renderPlot({ Seurat::VlnPlot(pbmc, features = input$gene_violin) +
-                                     ggplot2::theme(legend.position="none",
-                                                    axis.title.x = element_blank()) })
+################## violin plot
+  # draw violin plot based on selected gene
+  violin_plot <- reactive({Seurat::VlnPlot(pbmc, features = input$gene_violin) +
+                           ggplot2::theme(legend.position="none", axis.title.x = element_blank())  })
+  # render violin plot for display in shiny app
+  output$violin_plot <- renderPlot({ violin_plot() })
+  # render violin plot for downloading to png
+  output$download_violin <- downloadHandler(filename = function() { paste ("violin_", input$gene_violin, ".png", sep = "") },
+                                            content = function(file) { ggsave(file, violin_plot(), device = "png") } )
   
-  output$ridge_plot <- renderPlot({ Seurat::RidgePlot(pbmc, features = input$gene_ridge) +
-                                    ggplot2::theme(legend.position="none",
-                                                   axis.title.y = element_blank()) })
+################## ridge plot
+  # draw ridge plot based on selected gene
+  ridge_plot <- reactive({Seurat::RidgePlot(pbmc, features = input$gene_ridge) +
+                          ggplot2::theme(legend.position="none", axis.title.y = element_blank())  })
+  # render ridge plot for display in shiny app
+  output$ridge_plot <- renderPlot({ ridge_plot() })
+  # render ridge plot for downloading to png
+  output$download_ridge <- downloadHandler(filename = function() { paste ("ridge_", input$gene_ridge, ".png", sep = "") },
+                                            content = function(file) { ggsave(file, ridge_plot(), device = "png") } )
   
-  output$feature_plot <- renderPlot({ Seurat::FeaturePlot(pbmc, features = input$gene_feature) })
+################## single-gene feature plot
+  # draw feature plot based on selected gene
+  feature_plot <- reactive({ Seurat::FeaturePlot(pbmc, features = input$gene_feature) })
+  # render feature plot for display in shiny app
+  output$feature_plot <- renderPlot({ feature_plot() })
+  # render feature plot for downloading to png
+  output$download_feature <- downloadHandler(filename = function() { paste ("feature_", input$gene_feature, ".png", sep = "") },
+                                           content = function(file) { ggsave(file, feature_plot(), device = "png") } )
+
+################## multi-gene feature plot
+  # draw multifeature plot based on selected gene
+  multifeature_plot <- reactive({ Seurat::FeaturePlot(pbmc, features = input$gene_multifeature, blend = TRUE) })
+  # render multifeature plot for display in shiny app
+  output$multifeature_plot <- renderPlot({ multifeature_plot() })
+  # render multifeature plot for downloading to png
+  output$download_multifeature <- downloadHandler(filename = function() { paste ("multifeature_", input$gene_multifeature, ".png", sep = "") },
+                                             content = function(file) { ggsave(file, multifeature_plot(), device = "png",
+                                                                               width = 16, height = 6, units = "in") } )  
+################## dot plot
+  # draw dot plot based on selected gene
+  dot_plot <- reactive({ Seurat::DotPlot(pbmc, features = input$gene_dot) + 
+                         ggplot2::theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) })
+  # render dot plot for display in shiny app
+  output$dot_plot <- renderPlot({ dot_plot() })
+  # render dot plot for downloading to png
+  output$download_dot <- downloadHandler(filename = function() { paste ("dot_", input$gene_dot, ".png", sep = "") },
+                                                  content = function(file) { ggsave(file, dot_plot(), device = "png", bg = "white",
+                                                                                    width = 12, height = 6, units = "in") } ) 
   
+################## umap
   output$umap_plot <- renderPlotly({ baseplot <- Seurat::DimPlot(pbmc, reduction = "umap")
-                                   Seurat::HoverLocator(plot = baseplot, 
-                                                         information = Seurat::FetchData(pbmc, vars = c("ident", "PC_1", "nFeature_RNA"))) })
+                                     baseplot <- Seurat::HoverLocator(plot = baseplot, 
+                                                         information = Seurat::FetchData(pbmc, vars = c("ident", "PC_1", "nFeature_RNA")))
+                                     baseplot })
+
+################## qc plots  
+  output$qc_violin_plot <- renderPlot({ qc_violin_plot })
+  
+  output$qc_scatter_plot <- renderPlot({ qc_scatter_plot1 + qc_scatter_plot2 })
+  
+  output$qc_variable_features_plot <- renderPlot({
+                                                  # Identify the 10 most highly variable genes
+                                                  top10 <- head(Seurat::VariableFeatures(pbmc), 10)
+                                                  
+                                                  # plot variable features with labels
+                                                  plot1 <- Seurat::VariableFeaturePlot(pbmc)
+                                                  plot1 <- Seurat::LabelPoints(plot = plot1, points = top10, repel = TRUE)
+                                                  plot1
+                                                 })
   
 }
 
