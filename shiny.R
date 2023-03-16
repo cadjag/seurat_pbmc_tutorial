@@ -4,39 +4,12 @@ library(shinythemes)
 library(plotly)
 library(periscope)
 
-# environment setup / Seurat analysis & processing
-  # load data and initialize Seurat object
-    pbmc.data <- Seurat::Read10X(data.dir = "./data/pbmc3k_filtered_gene_bc_matrices/filtered_gene_bc_matrices/hg19/")
-    pbmc <- Seurat::CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3, min.features = 200)
-  # extract gene list from Seurat object
-    gene_list <- rownames(pbmc) %>% sort()
-  # add mitochondrial RNA % column to QC stats dataframe
-    pbmc[["percent.mt"]] <- Seurat::PercentageFeatureSet(pbmc, pattern = "^MT-")
-  # make qc plots
-    qc_violin_plot <- Seurat::VlnPlot(pbmc, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
-    qc_scatter_plot1 <- Seurat::FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "percent.mt")
-    qc_scatter_plot2 <- Seurat::FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-  # subset cells for further analysis based on QC metrics
-    pbmc <- subset(pbmc, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & percent.mt < 5)
-  # normalize data
-    pbmc <- Seurat::NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
-  # find top 2000 variable features
-    pbmc <- Seurat::FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 2000)
-  # scale data
-    pbmc <- Seurat::ScaleData(pbmc, features = gene_list)
-  # run PCA
-    pbmc <- Seurat::RunPCA(pbmc, features = Seurat::VariableFeatures(object = pbmc))
-  # cluster cells
-    pbmc <- Seurat::FindNeighbors(pbmc, dims = 1:10)
-    pbmc <- Seurat::FindClusters(pbmc, resolution = 0.5)
-  # rename clusters
-    new.cluster.ids <- c("Naive CD4+ T", "CD14+ Mono", "Memory CD4+ T", "B", "CD8+ T", "FCGR3A+ Mono", "NK", "DC", "Platelet")
-    names(new.cluster.ids) <- levels(pbmc)
-    pbmc <- Seurat::RenameIdents(pbmc, new.cluster.ids)
-  # run umap
-    pbmc <- Seurat::RunUMAP(pbmc, dims = 1:10)
-  
+ 
 
+# load rds containing pre-analyzed data    
+  pbmc <- readRDS(file = "pbmc.rds")
+  gene_list <- rownames(pbmc) %>% sort()  
+    
 # app ui
 
 ui <- navbarPage("PBMC scRNA-seq Data",
@@ -138,14 +111,7 @@ ui <- navbarPage("PBMC scRNA-seq Data",
                  )),
         tabPanel("Static",
                  plotOutput("umap_plot2", width = "800px", height = "600px"))
-        ),
-        
-        tabPanel("QC Plots",
-                 mainPanel(
-                   plotOutput("qc_violin_plot", height = "600px"),
-                   plotOutput("qc_scatter_plot", height = "600px"),
-                   plotOutput("qc_variable_features_plot", width = "50%", height = "600px")
-                 ))
+        )
 )
 
 
@@ -231,20 +197,7 @@ server <- function(input, output, session) {
                                      baseplot })
   output$umap_plot2 <- renderPlot({ Seurat::DimPlot(pbmc, reduction = "umap") })
 
-################## qc plots  
-  output$qc_violin_plot <- renderPlot({ qc_violin_plot })
-  
-  output$qc_scatter_plot <- renderPlot({ qc_scatter_plot1 + qc_scatter_plot2 })
-  
-  output$qc_variable_features_plot <- renderPlot({
-                                                  # Identify the 10 most highly variable genes
-                                                  top10 <- head(Seurat::VariableFeatures(pbmc), 10)
-                                                  
-                                                  # plot variable features with labels
-                                                  plot1 <- Seurat::VariableFeaturePlot(pbmc)
-                                                  plot1 <- Seurat::LabelPoints(plot = plot1, points = top10, repel = TRUE)
-                                                  plot1
-                                                 })
+
   
 }
 
