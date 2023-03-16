@@ -1,0 +1,14 @@
+name: pbmc_app
+title: pbmc_app
+username:
+account: caitlinjagla
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 8587054
+bundleId: 6967052
+url: https://caitlinjagla.shinyapps.io/pbmc_app/
+when: 1678984008.84558
+lastSyncTime: 1678984008.84559
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: R/project_setup.R|README.md|seurat_pbmc_tutorial.html|seurat_pbmc_tutorial.Rmd|seurat_pbmc_tutorial_ood.html|seurat_pbmc_tutorial_ood.Rmd|images

@@ -10,6 +10,7 @@ renv::install("shiny")
 renv::install("shinythemes")
 renv::install("plotly")
 renv::install("periscope")
+renv::install("rsconnect")
 BiocManager::install("limma")
 
 reticulate::py_install(packages = 'umap-learn')
