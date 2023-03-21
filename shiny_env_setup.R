@@ -1,4 +1,6 @@
+library(tidyverse)
 # environment setup / Seurat analysis & processing
+
 # load data and initialize Seurat object
 pbmc.data <- Seurat::Read10X(data.dir = "./data/pbmc3k_filtered_gene_bc_matrices/filtered_gene_bc_matrices/hg19/")
 pbmc <- Seurat::CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3, min.features = 200)
@@ -6,10 +8,6 @@ pbmc <- Seurat::CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.c
 gene_list <- rownames(pbmc) %>% sort()
 # add mitochondrial RNA % column to QC stats dataframe
 pbmc[["percent.mt"]] <- Seurat::PercentageFeatureSet(pbmc, pattern = "^MT-")
-# make qc plots
-qc_violin_plot <- Seurat::VlnPlot(pbmc, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
-qc_scatter_plot1 <- Seurat::FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "percent.mt")
-qc_scatter_plot2 <- Seurat::FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 # subset cells for further analysis based on QC metrics
 pbmc <- subset(pbmc, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & percent.mt < 5)
 # normalize data
