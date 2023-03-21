@@ -1,3 +1,5 @@
+# from https://www.jumpingrivers.com/blog/shiny-auto-docker/
+
 glue_sys_reqs = function(pkgs) {
   rlang::check_installed("curl")
   rspm = Sys.getenv("RSPM_ROOT", "https://packagemanager.rstudio.com")

@@ -1,3 +1,5 @@
+#from https://www.jumpingrivers.com/blog/shiny-auto-docker/
+
 shiny_write_docker = function(
     path = ".", appdir = "app", lockfile = "shiny_renv.lock",
     port = 3838, expose = TRUE, rspm = TRUE
